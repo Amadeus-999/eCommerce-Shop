@@ -34,9 +34,10 @@
                 <h1 class="text-center">Administracion de Miembros</h1>
                 <div class="container">
                     <div class="table-responsive">
-                        <table class="main-table text-center table table-bordered">
+                        <table class="main-table manage-members text-center table table-bordered">
                             <tr>
                                 <td>#ID</td>
+                                <td>Avatar</td>
                                 <td>Nombre de Usuario</td>
                                 <td>Email</td>
                                 <td>Nombre Completo</td>
@@ -48,6 +49,13 @@
                                 foreach($rows as $row){
                                     echo "<tr>";
                                         echo "<td>" . $row['UserID'] . "</td>";
+                                        echo "<td>";
+                                            if(empty($row['avatar'])){
+                                                echo 'Sin imagen';
+                                            }else{
+                                                echo "<img src='uploads/avatars/" . $row['avatar'] . "' at='' />";
+                                            }
+                                        echo "</td>";
                                         echo "<td>" . $row['Username'] . "</td>";
                                         echo "<td>" . $row['Email'] . "</td>";
                                         echo "<td>" . $row['FullName'] . "</td>";
@@ -146,6 +154,23 @@
                 echo "<h1 class='text-center'>Agregar Miembro</h1>";
                 echo "<div class='container'>";
 
+                //Upload Variables
+                $avatarName = $_FILES['avatar']['name'];
+                $avatarSize = $_FILES['avatar']['size'];
+                $avatarTmp = $_FILES['avatar']['tmp_name'];
+                $avatarType =  $_FILES['avatar']['type'];
+
+                //Lista de archivos permitidos para cargar 
+                $avatarAllowedExtension = array("jpeg", "jpg", "png", "gif");
+
+                //Get Avatar Extension
+                
+                /*ERROR POR 'explode' no de vuelve la variable por referencia que espera 'end' 
+                $avatarExtension = strtolower(end(explode('.', $avatarName)));
+                */
+                $avatarNameParts = explode('.', $avatarName);
+                $avatarExtension = strtolower(end($avatarNameParts));
+
                 //Get variables del Form
                 $user = $_POST['username'];
                 $pass = $_POST['password'];
@@ -173,12 +198,25 @@
                 if(empty($email)){
                     $formErrors[] = 'Email no puede estar <strong> vacio </strong>';
                 }
+                if(! empty($avatarName) && ! in_array($avatarExtension, $avatarAllowedExtension)){
+                    $formErrors[] = 'Esta extencion no esta <strong> permitida </strong>';
+                }
+                if(empty($avatarName)){
+                    $formErrors[] = 'Imagen de Avatar es <strong> requerido </strong>';
+                }
+                if($avatarSize > 4191304){
+                    $formErrors[] = 'Imagen de Avatar no puede ser mas grande que <strong> 4MB </strong>';
+                }
                 foreach($formErrors as $error){
                     echo '<div class="alert alert-danger">' . $error . '</div>';
                 }
 
                 //Checa si no hay error para procedere con la opereacion Update
                 if(empty($formErrors)){
+                    //image file
+                    $avatar = rand(0, 1000000000) . '_' . $avatarName;
+                    move_uploaded_file($avatarTmp, "uploads\avatars\\" . $avatar);
+                    
                     //Checa si el usuario existe en la Database
                     $check = checkItem("Username", "users", $user);
 
@@ -188,13 +226,14 @@
                     } else{
                         //Insertar informacion de usuario en Database
                         $stmt = $con->prepare("INSERT INTO
-                                                users(Username, Password, Email, FullName, RegStatus, Date)
-                                                VALUES(:zuser, :zpass, :zemail, :zname, 1, now()) ");
+                                                users(Username, Password, Email, FullName, RegStatus, Date, avatar)
+                                                VALUES(:zuser, :zpass, :zemail, :zname, 1, now(), :zavatar) ");
                         $stmt->execute(array(
                             'zuser' => $user,
                             'zpass' => $hashPass,
                             'zemail' => $email,
-                            'zname' => $name
+                            'zname' => $name,
+                            'zavatar' => $avatar
                         ));
                         //Echo Message Exitoso
                         echo "<div class='container'>";
