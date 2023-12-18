@@ -45,6 +45,23 @@
         }else{
             $formErrors = array();
 
+            //Upload Variables
+            $avatarName = $_FILES['avatar']['name'];
+            $avatarSize = $_FILES['avatar']['size'];
+            $avatarTmp = $_FILES['avatar']['tmp_name'];
+            $avatarType =  $_FILES['avatar']['type'];
+
+            //Lista de archivos permitidos para cargar 
+            $avatarAllowedExtension = array("jpeg", "jpg", "png", "gif");
+
+            //Get Avatar Extension
+            
+            /*ERROR POR 'explode' no de vuelve la variable por referencia que espera 'end' 
+            $avatarExtension = strtolower(end(explode('.', $avatarName)));
+            */
+            $avatarNameParts = explode('.', $avatarName);
+            $avatarExtension = strtolower(end($avatarNameParts));
+
             $username = $_POST['username'];
             $password = $_POST['password'];
             $password2 = $_POST['password2'];
@@ -56,7 +73,7 @@
                 $filterdUser = filter_var($_POST['username'], FILTER_SANITIZE_STRING);
 
                 if(strlen($filterdUser)<4){
-                    $formErrors[] = 'Username debe de tener mas de 4 caracteres';
+                    $formErrors[] = 'Username no debe de tener menos de 4 caracteres';
                 }
             }
             if(isset($password) && isset($password2)){
@@ -78,8 +95,21 @@
                     $formErrors[] = 'Este correo no es valido';
                 }
             }
+            if(! empty($avatarName) && ! in_array($avatarExtension, $avatarAllowedExtension)){
+                $formErrors[] = 'Esta extencion no esta <strong> permitida </strong>';
+            }
+            if(empty($avatarName)){
+                $formErrors[] = 'Imagen de Avatar es <strong> requerido </strong>';
+            }
+            if($avatarSize > 8191304){
+                $formErrors[] = 'Imagen de Avatar no puede ser mas grande que <strong> 8MB </strong>';
+            }
             //Checa si no hay error para procedere con Agregar el user
             if(empty($formErrors)){
+                //image file
+                $avatar = rand(0, 1000000000) . '_' . $avatarName;
+                move_uploaded_file($avatarTmp, "admin\uploads\avatars\\" . $avatar);
+
                 //Checa si el usuario existe en la Database
                 $check = checkItem("Username", "users", $username);
 
@@ -88,12 +118,13 @@
                 } else{
                     //Insertar informacion de usuario en Database
                     $stmt = $con->prepare("INSERT INTO
-                                            users(Username, Password, Email, RegStatus, Date)
-                                            VALUES(:zuser, :zpass, :zemail, 0, now()) ");
+                                            users(Username, Password, Email, RegStatus, Date, avatar)
+                                            VALUES(:zuser, :zpass, :zemail, 0, now(), :zavatar) ");
                     $stmt->execute(array(
                         'zuser' => $username,
                         'zpass' => sha1($password),
-                        'zemail' => $email
+                        'zemail' => $email,
+                        'zavatar' => $avatar
                     ));
                     //Echo Message Exitoso
                     $succesMsg = 'Felicidades, tu usuario ha sido registrado';
@@ -130,11 +161,11 @@
     </form>
     <!-- End Login Form -->
     <!-- Start Signup Form -->
-    <form class="signup" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="POST">
+    <form class="signup" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="POST" enctype="multipart/form-data"> 
         <div class="input-container">
             <input 
                 pattern=".{4,8}"
-                title="Username tiene que tener mas de 4 caracteres"
+                title="Username tiene que tener menos de 8 caracteres"
                 class="form-control" 
                 type="text" 
                 name="username" 
@@ -165,6 +196,9 @@
                 type="text" 
                 name="email" 
                 placeholder="Escribe tu email"/>
+        </div>
+        <div class="input-container">
+            <input type="file"  name="avatar" class="form-control" required="required"/>
         </div>
         <input class="btn btn-success btn-block" name="signup" type="submit" value="Signup">
     </form>
