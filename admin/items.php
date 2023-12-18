@@ -39,9 +39,10 @@
                 <h1 class="text-center">Administracion de Items</h1>
                 <div class="container">
                     <div class="table-responsive">
-                        <table class="main-table text-center table table-bordered">
+                        <table class="main-table manage-members text-center table table-bordered">
                             <tr>
                                 <td>#ID</td>
+                                <td>Item</td>
                                 <td>Nombre</td>
                                 <td>Descripcion</td>
                                 <td>Precio</td>
@@ -55,6 +56,13 @@
                                 foreach($items as $item){
                                     echo "<tr>";
                                         echo "<td>" . $item['Item_ID'] . "</td>";
+                                        echo "<td>";
+                                            if(empty($item['Image'])){
+                                                echo 'Sin imagen';
+                                            }else{
+                                                echo "<img src='uploads/items/" . $item['Image'] . "' at='' />";
+                                            }
+                                        echo "</td>";
                                         echo "<td>" . $item['Name'] . "</td>";
                                         echo "<td>" . $item['Description'] . "</td>";
                                         echo "<td>" . $item['Price'] . "</td>";
@@ -96,7 +104,7 @@
                 <h1 class="text-center">Nuevo Item</h1>
 
                 <div class="container">
-                    <form class="form-horizontal" action="?do=insert" method="POST">
+                    <form class="form-horizontal" action="?do=insert" method="POST" enctype="multipart/form-data">
                         <!-- Star Nombre Field -->
                         <div class="form-group form-group-lg">
                             <label class="col-sm-2 control-label">Item</label> 
@@ -207,6 +215,14 @@
                             </div>
                         </div>
                         <!-- End Tags Field -->
+                        <!-- Star items Field -->
+                        <div class="form-group form-group-lg">
+                            <label class="col-sm-2 control-label">Imagen de Item</label> 
+                            <div class="col-sm-10 col-md-6">
+                                    <input type="file"  name="image" class="form-control" required="required"/>
+                            </div>
+                        </div>
+                        <!-- End items Field -->
                         <!-- Star Submit Field -->
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-10">
@@ -223,6 +239,19 @@
 
                 echo "<h1 class='text-center'>Agregar Item</h1>";
                 echo "<div class='container'>";
+
+                //Upload Variables
+                $itemName = $_FILES['image']['name'];
+                $itemSize = $_FILES['image']['size'];
+                $itemTmp = $_FILES['image']['tmp_name'];
+                $itemType =  $_FILES['image']['type'];
+
+                //Lista de archivos permitidos para cargar 
+                $itemAllowedExtension = array("jpeg", "jpg", "png", "gif");
+
+                //Get item Extension
+                $itemNameParts = explode('.', $itemName);
+                $itemExtension = strtolower(end($itemNameParts));
 
                 //Get variables del Form
                 $name = $_POST['name'];
@@ -257,18 +286,28 @@
                 if($status == 0){
                     $formErrors[] = 'Debes elegir la<strong> Categoria </strong>';
                 }
-            
+                if(! empty($itemName) && ! in_array($itemExtension, $itemAllowedExtension)){
+                    $formErrors[] = 'Esta extencion no esta <strong> permitida </strong>';
+                }
+                if(empty($itemName)){
+                    $formErrors[] = 'Imagen de item es <strong> requerido </strong>';
+                }
+                if($itemSize > 8191304){
+                    $formErrors[] = 'Imagen de item no puede ser mas grande que <strong> 8MB </strong>';
+                }
                 foreach($formErrors as $error){
                     echo '<div class="alert alert-danger">' . $error . '</div>';
                 }
 
                 //Checa si no hay error para procedere con la opereacion Update
                 if(empty($formErrors)){
-                    
+                    $item_img = rand(0, 1000000000) . '_' . $itemName;
+                    move_uploaded_file($itemTmp, "uploads\items\\" . $item_img);
+
                     //Insertar informacion de usuario en Database
                     $stmt = $con->prepare("INSERT INTO
-                                            items(Name, Description, Price, Country_Made, Status, Add_Date, Cat_ID, Member_ID, tags)
-                                            VALUES(:zname, :zdesc, :zprice, :zcountry, :zstatus, now(), :zcat, :zmember, :ztags)");
+                                            items(Name, Description, Price, Country_Made, Status, Add_Date, Cat_ID, Member_ID, tags, Image)
+                                            VALUES(:zname, :zdesc, :zprice, :zcountry, :zstatus, now(), :zcat, :zmember, :ztags, :zimage)");
                     $stmt->execute(array(
                         'zname' => $name,
                         'zdesc' => $desc,
@@ -277,7 +316,8 @@
                         'zstatus' => $status,
                         'zcat' => $cat,
                         'zmember' => $member,
-                        'ztags' => $tags
+                        'ztags' => $tags,
+                        ':zimage' => $item_img
                     ));
                     //Echo Message Exitoso
                     echo "<div class='container'>";
@@ -308,7 +348,7 @@
                 ?>    
                     <h1 class="text-center">Editar Item</h1>
                     <div class="container">
-                        <form class="form-horizontal" action="?do=Update" method="POST">
+                        <form class="form-horizontal" action="?do=Update" method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="itemid" value="<?php echo $itemid ?>" />
                             <!-- Star Nombre Field -->
                             <div class="form-group form-group-lg">
@@ -426,6 +466,18 @@
                                 </div>
                             </div>
                             <!-- End Tags Field -->
+                            <!-- Star items Field -->
+                            <div class="form-group form-group-lg">
+                                <label class="col-sm-2 control-label">Imagen de Item</label> 
+                                <div class="col-sm-10 col-md-6">
+                                        <input 
+                                            type="file"  
+                                            name="image" 
+                                            class="form-control" 
+                                            required="required"/>
+                                </div>
+                            </div>
+                            <!-- End items Field -->
                             <!-- Star Submit Field -->
                             <div class="form-group">
                                 <div class="col-sm-offset-2 col-sm-10">
@@ -500,6 +552,20 @@
                 echo "<div class='container'>";
 
                 if($_SERVER['REQUEST_METHOD'] == 'POST'){
+
+                    //Upload Variables
+                    $itemName = $_FILES['image']['name'];
+                    $itemSize = $_FILES['image']['size'];
+                    $itemTmp = $_FILES['image']['tmp_name'];
+                    $itemType =  $_FILES['image']['type'];
+
+                    //Lista de archivos permitidos para cargar 
+                    $itemAllowedExtension = array("jpeg", "jpg", "png", "gif");
+
+                    //Get item Extension
+                    $itemNameParts = explode('.', $itemName);
+                    $itemExtension = strtolower(end($itemNameParts));
+
                     //Get variables del Form
                     $id = $_POST['itemid'];
                     $name = $_POST['name'];
@@ -534,12 +600,23 @@
                     if($status == 0){
                         $formErrors[] = 'Debes elegir la<strong> Categoria </strong>';
                     }
-                
+                    if(! empty($itemName) && ! in_array($itemExtension, $itemAllowedExtension)){
+                        $formErrors[] = 'Esta extencion no esta <strong> permitida </strong>';
+                    }
+                    if(empty($itemName)){
+                        $formErrors[] = 'Imagen de item es <strong> requerido </strong>';
+                    }
+                    if($itemSize > 8191304){
+                        $formErrors[] = 'Imagen de item no puede ser mas grande que <strong> 8MB </strong>';
+                    }
                     foreach($formErrors as $error){
                         echo '<div class="alert alert-danger">' . $error . '</div>';
                     }
 
                     if(empty($formErrors)){
+                        $item_img = rand(0, 1000000000) . '_' . $itemName;
+                        move_uploaded_file($itemTmp, "uploads\items\\" . $item_img);
+
                         //Update la Database con esta info
                         $stmt = $con->prepare("UPDATE 
                                                     items 
@@ -551,10 +628,11 @@
                                                     Status = ?,
                                                     Cat_ID = ?,
                                                     Member_ID = ?,
-                                                    tags = ?
+                                                    tags = ?,
+                                                    Image = ?
                                                 WHERE  
                                                     Item_ID = ?");
-                        $stmt->execute(array($name, $desc, $price, $country, $status, $cat, $member, $tags, $id));
+                        $stmt->execute(array($name, $desc, $price, $country, $status, $cat, $member, $tags, $item_img, $id));
 
                         //Echo Message Exitoso
                         $theMsg = "<div class='alert alert-success'>" . $stmt->rowCount() . ' Registro Actualizado </div>';
