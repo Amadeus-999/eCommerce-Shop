@@ -164,10 +164,6 @@
                 $avatarAllowedExtension = array("jpeg", "jpg", "png", "gif");
 
                 //Get Avatar Extension
-                
-                /*ERROR POR 'explode' no de vuelve la variable por referencia que espera 'end' 
-                $avatarExtension = strtolower(end(explode('.', $avatarName)));
-                */
                 $avatarNameParts = explode('.', $avatarName);
                 $avatarExtension = strtolower(end($avatarNameParts));
 
@@ -204,8 +200,8 @@
                 if(empty($avatarName)){
                     $formErrors[] = 'Imagen de Avatar es <strong> requerido </strong>';
                 }
-                if($avatarSize > 4191304){
-                    $formErrors[] = 'Imagen de Avatar no puede ser mas grande que <strong> 4MB </strong>';
+                if($avatarSize > 8191304){
+                    $formErrors[] = 'Imagen de Avatar no puede ser mas grande que <strong> 8MB </strong>';
                 }
                 foreach($formErrors as $error){
                     echo '<div class="alert alert-danger">' . $error . '</div>';
@@ -269,7 +265,7 @@
                     <h1 class="text-center">Editar Miembros</h1>
 
                     <div class="container">
-                        <form class="form-horizontal" action="?do=Update" method="POST">
+                        <form class="form-horizontal" action="?do=Update" method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="userid" value="<?php echo $userid ?>" />
                             <!-- Star username Field -->
                             <div class="form-group form-group-lg">
@@ -304,6 +300,14 @@
                                 </div>
                             </div>
                             <!-- End FullName Field -->
+                            <!-- Star Avatar Field -->
+                            <div class="form-group form-group-lg">
+                                <label class="col-sm-2 control-label">Avatar de Usuario</label> 
+                                <div class="col-sm-10 col-md-4">
+                                        <input type="file"  name="avatar" class="form-control" required="required"/>
+                                </div>
+                            </div>
+                            <!-- End Avatar Field -->
                             <!-- Star Submit Field -->
                             <div class="form-group">
                                 <div class="col-sm-offset-2 col-sm-10">
@@ -326,6 +330,19 @@
                 echo "<div class='container'>";
 
                 if($_SERVER['REQUEST_METHOD'] == 'POST'){
+
+                    //Upload Variables
+                    $avatarName = $_FILES['avatar']['name'];
+                    $avatarSize = $_FILES['avatar']['size'];
+                    $avatarTmp = $_FILES['avatar']['tmp_name'];
+                    $avatarType =  $_FILES['avatar']['type'];
+
+                    //Lista de archivos permitidos para cargar 
+                    $avatarAllowedExtension = array("jpeg", "jpg", "png", "gif");
+
+                    //Get Avatar Extension
+                    $avatarNameParts = explode('.', $avatarName);
+                    $avatarExtension = strtolower(end($avatarNameParts));
                     //Get variables del Form
                     $id = $_POST['userid'];
                     $user = $_POST['username'];
@@ -352,12 +369,25 @@
                     if(empty($email)){
                         $formErrors[] = 'Email no puede estar <strong> vacio </strong>';
                     }
+                    if(! empty($avatarName) && ! in_array($avatarExtension, $avatarAllowedExtension)){
+                        $formErrors[] = 'Esta extencion no esta <strong> permitida </strong>';
+                    }
+                    if(empty($avatarName)){
+                        $formErrors[] = 'Imagen de Avatar es <strong> requerido </strong>';
+                    }
+                    if($avatarSize > 8191304){
+                        $formErrors[] = 'Imagen de Avatar no puede ser mas grande que <strong> 8MB </strong>';
+                    }
                     foreach($formErrors as $error){
                         echo '<div class="alert alert-danger">' . $error . '</div>';
                     }
 
                     //Checa si no hay error para procedere con la opereacion Update
                     if(empty($formErrors)){
+                        //image file
+                        $avatar = rand(0, 1000000000) . '_' . $avatarName;
+                        move_uploaded_file($avatarTmp, "uploads\avatars\\" . $avatar);
+
                         $stmt2 = $con->prepare("SELECT 
                                                     *
                                                 FROM
@@ -375,8 +405,8 @@
                             redirectHome($theMsg, 'back');
                         }else{
                             //Update la Database con esta info
-                            $stmt = $con->prepare("UPDATE users SET Username = ?, Email = ?, FullName = ?, Password = ? WHERE  UserID = ?");
-                            $stmt->execute(array($user, $email, $name, $pass, $id));
+                            $stmt = $con->prepare("UPDATE users SET Username = ?, Email = ?, FullName = ?, Password = ?, avatar = ? WHERE  UserID = ?");
+                            $stmt->execute(array($user, $email, $name, $pass, $avatar, $id));
 
                             //Echo Message Exitoso
                             $theMsg = "<div class='alert alert-success'>" . $stmt->rowCount() . ' Registro Actualizado </div>';
