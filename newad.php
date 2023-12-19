@@ -8,6 +8,19 @@
             
             $formErrors = array();
 
+            //Upload Variables
+            $itemName = $_FILES['image']['name'];
+            $itemSize = $_FILES['image']['size'];
+            $itemTmp = $_FILES['image']['tmp_name'];
+            $itemType =  $_FILES['image']['type'];
+
+            //Lista de archivos permitidos para cargar 
+            $itemAllowedExtension = array("jpeg", "jpg", "png", "gif");
+
+            //Get item Extension
+            $itemNameParts = explode('.', $itemName);
+            $itemExtension = strtolower(end($itemNameParts));
+
             $name = filter_var($_POST['name'], FILTER_SANITIZE_STRING);
             $desc = filter_var($_POST['description'], FILTER_SANITIZE_STRING);
             $price = filter_var($_POST['price'], FILTER_SANITIZE_NUMBER_INT);
@@ -17,11 +30,7 @@
             $tags = filter_var($_POST['tags'], FILTER_SANITIZE_STRING);
 
             
-            // Manejo de la imagen
-            $imagen = $_FILES["imagen"]["name"];
-            $imagen_temp = $_FILES["imagen"]["tmp_name"];
-            $ruta_imagen = "../img/" . $imagen; // Ajusta la carpeta según tu estructura de archivos
-            move_uploaded_file($imagen_temp, $ruta_imagen);
+            
 
             if(strlen($name)<4){
                 $formErrors[] = 'El titulo del articulo debe tener al menos 4 caracteres';
@@ -41,9 +50,19 @@
             if(empty($category)){
                 $formErrors[] = 'La categoria no debe estar vacia';
             }
-
+            if(! empty($itemName) && ! in_array($itemExtension, $itemAllowedExtension)){
+                $formErrors[] = 'Esta extencion no esta <strong> permitida </strong>';
+            }
+            if(empty($itemName)){
+                $formErrors[] = 'Imagen de item es <strong> requerido </strong>';
+            }
+            if($itemSize > 8191304){
+                $formErrors[] = 'Imagen de item no puede ser mas grande que <strong> 8MB </strong>';
+            }
             if(empty($formErrors)){
-                    
+                $item_img = rand(0, 1000000000) . '_' . $itemName;
+                move_uploaded_file($itemTmp, "admin\uploads\items\\" . $item_img);  
+
                 //Insertar informacion de usuario en Database
                 $stmt = $con->prepare("INSERT INTO
                                         items(Name, Description, Price, Country_Made, Image, Status, Add_Date, Cat_ID, Member_ID, tags)
@@ -53,7 +72,7 @@
                     'zdesc' => $desc,
                     'zprice' => $price,
                     'zcountry' => $country,
-                    ':zimage' => $ruta_imagen,
+                    ':zimage' => $item_img,
                     'zstatus' => $status,
                     'zcat' => $category,
                     'zmember' => $_SESSION['uid'],
@@ -135,16 +154,18 @@
                                         </div>
                                     </div>
                                     <!-- End Pais Field -->
+                                    <!-- Star items Field -->
                                     <div class="form-group form-group-lg">
-                                        <label class="col-sm-3 control-label">Imagen</label> 
+                                        <label class="col-sm-3 control-label">Imagen de Item</label> 
                                         <div class="col-sm-10 col-md-9">
-                                            <input type="file" 
-                                                name="imagen" 
-                                                class="form-control-file" 
-                                                accept="image/*"
-                                            >
-                                        </div>    
-                                    </div>    
+                                                <input 
+                                                    type="file"  
+                                                    name="image" 
+                                                    class="form-control" 
+                                                    required="required"/>
+                                        </div>
+                                    </div>
+                                    <!-- End items Field -->  
                                     <!-- Star Estado Field -->
                                     <div class="form-group form-group-lg">
                                         <label class="col-sm-3 control-label">Estado</label> 
