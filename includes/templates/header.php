@@ -15,7 +15,32 @@
             <?php
                 if(isset($_SESSION['user'])){ ?>
 
-                    <img class="my-image img-thumbnail img-circle" src="R.png" alt="" />
+                    <?php
+                        $username = $_SESSION['user'];
+                        $stmt = $con->prepare("SELECT avatar FROM users WHERE Username = :username");
+
+                        // Asociar el parámetro
+                        $stmt->bindParam(':username', $username, PDO::PARAM_STR);
+                    
+                        // Ejecutar la consulta
+                        $stmt->execute();
+                    
+                        // Obtener el resultado
+                        $avatar = $stmt->fetchColumn();
+                    
+                        // Cerrar la consulta
+                        $stmt->closeCursor();
+                    
+                        if ($avatar) {
+                            // Mostrar la imagen del avatar con la ruta completa
+                            echo '<img class="my-image img-circle" src="admin/uploads/avatars/' . $avatar . '" alt="User Avatar" />';
+                        } else {
+                            // Mostrar una imagen predeterminada o un mensaje de que no se encontró un avatar
+                            echo '<img class="my-image img-thumbnail img-circle" src="ruta_de_imagen_predeterminada.jpg" alt="Default Avatar" />';
+                        }
+                    ?>
+
+                    
                     <div class="btn-group my-info">
                         <span class="btn btn-default dropdown-toggle" data-toggle="dropdown">
                             <?php echo $sessionUser ?>
@@ -49,7 +74,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="index.php">homepage</a>
+                <a class="navbar-brand" href="index.php">Pagina Principal</a>
             </div>
             <div class="collapse navbar-collapse" id="app-nav">
                 <ul class="nav navbar-nav navbar-right">
