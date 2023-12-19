@@ -130,17 +130,20 @@
         <hr class="custom-hr">
         <?php
             $stmt = $con->prepare("SELECT
-                                    comments.*, users.Username AS Member   
-                                FROM
-                                    comments
-                                INNER JOIN
-                                    users
-                                ON
-                                    users.UserID = comments.user_id
-                                WHERE
-                                    item_id = ?
-                                ORDER BY
-                                    c_id DESC");
+                                        comments.*,
+                                        users.Username AS Member,
+                                        users.avatar AS Avatar
+                                    FROM
+                                        comments
+                                    INNER JOIN
+                                        users
+                                    ON
+                                        users.UserID = comments.user_id
+                                    WHERE
+                                        item_id = ?
+                                    ORDER BY
+                                        c_id DESC;
+                                    ");
             $stmt->execute(array($item['Item_ID']));
             $comments = $stmt->fetchAll();
 
@@ -152,7 +155,10 @@
                 <div class="comment-box">
                     <div class="row">
                         <div class="col-sm-2 text-center">
-                            <img class="img-responsive img-thumbnail img-circle center-block" src="R.png" alt="" />
+
+                            <?php
+                                echo '<img src="admin/uploads/avatars/' . $comment['Avatar'] . '" alt="Imagen del producto" class="product-image" />';
+                            ?>
                             <?php echo $comment['Member'] ?>
                         </div>
                         <div class="col-sm-10">
