@@ -40,7 +40,9 @@
     <div class="container">
         <div class="row">
             <div class="col-md-3">
-                <img src="<?php echo $item['Image']?>" alt="Imagen del producto" class="product-image">
+                <?php
+                echo '<img src="admin/uploads/items/' . $item['Image'] . '" alt="Imagen del producto" class="product-image" />';
+                ?>
             </div>
             <div class="col-md-9 item-info">
                 <h2><?php echo $item['Name'] ?></h2>
