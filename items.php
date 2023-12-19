@@ -155,9 +155,8 @@
                 <div class="comment-box">
                     <div class="row">
                         <div class="col-sm-2 text-center">
-
                             <?php
-                                echo '<img src="admin/uploads/avatars/' . $comment['Avatar'] . '" alt="Imagen del producto" class="product-image" />';
+                                echo '<img src="admin/uploads/avatars/' . $comment['Avatar'] . '" alt="Imagen del producto" class="img-responsive img-thumbnail img-circle center-block" />';
                             ?>
                             <?php echo $comment['Member'] ?>
                         </div>
