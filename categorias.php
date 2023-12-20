@@ -1,5 +1,6 @@
 <?php 
     session_start();
+    $pageTitle = 'Categoria';
     include 'init.php'; 
 ?>
 
