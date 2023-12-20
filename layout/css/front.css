@@ -129,6 +129,13 @@ h1{
 .item-box{
     position: relative;
 }
+.item-image {
+    max-width: 100%; 
+    max-height: 200px; 
+    min-height: 100px; 
+    object-fit: cover; 
+}
+
 .item-box .price-tag{
     background-color: #B4B4B4;
     padding: 2px 10px;
@@ -150,6 +157,12 @@ h1{
     height: 44px;
     max-height: 44px;
 }
+.item-description {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /*End Categori*/
 /*Star Profile*/
 .information{
