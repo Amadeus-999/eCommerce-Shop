@@ -64,7 +64,14 @@
                                             }
                                         echo "</td>";
                                         echo "<td>" . $item['Name'] . "</td>";
-                                        echo "<td>" . $item['Description'] . "</td>";
+                                        echo "<td>";
+                                        $descripcion = $item['Description'];
+                                        if (strlen($descripcion) > 60) {
+                                            echo substr($descripcion, 0, 60) . "...";
+                                        } else {
+                                            echo $descripcion;
+                                        }
+                                        echo"</td>";
                                         echo "<td>" . $item['Price'] . "</td>";
                                         echo "<td>" . $item['Add_Date'] . "</td>";
                                         echo "<td>" . $item['categoria_name'] . "</td>";
