@@ -65,8 +65,8 @@
 
                 //Insertar informacion de usuario en Database
                 $stmt = $con->prepare("INSERT INTO
-                                        items(Name, Description, Price, Country_Made, Image, Status, Add_Date, Cat_ID, Member_ID, tags)
-                                        VALUES(:zname, :zdesc, :zprice, :zcountry, :zimage, :zstatus, now(), :zcat, :zmember, :ztags)");
+                                        items(Name, Description, Price, Country_Made, Image, Status, Add_Date, Cat_ID, Member_ID, tags, Approve)
+                                        VALUES(:zname, :zdesc, :zprice, :zcountry, :zimage, :zstatus, now(), :zcat, :zmember, :ztags, 1)");
                 $stmt->execute(array(
                     'zname' => $name,
                     'zdesc' => $desc,
